@@ -1,0 +1,6 @@
+mlx>=0.8.0
+mlx_lm
+transformers
+numpy
+jupyterlab
+ipywidgets
