@@ -1,0 +1,5 @@
+defaults:
+  - inference_config
+  - _self_
+
+path: ./results/latex

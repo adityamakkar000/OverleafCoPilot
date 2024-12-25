@@ -15,7 +15,7 @@ cs.store(name="inference_config", node=InferenceConfig)
 
 def load_model(cfg: InferenceConfig):
   model = AutoModelForCausalLM.from_pretrained(cfg.model_id, device_map=cfg.device)
-  merged_model = PeftModel.from_pretrained(model, cfg.path)
+  merged_model = PeftModel.from_pretrained(model, f"{cfg.output}/{cfg.name}/finetuned_models/")
   merged_model = merged_model.merge_and_unload()
   tokenizer = AutoTokenizer.from_pretrained(cfg.model_id, add_eos_token=True, padding_side="left")
   return merged_model, tokenizer
@@ -35,13 +35,15 @@ def get_completion(query: str, model, tokenizer, device: str) -> str:
   decoded = tokenizer.decode(generated_ids[0], skip_special_tokens=True)
   return decoded
 
-@hydra.main(config_path=None, config_name="inference_config")
+@hydra.main(version_base=None, config_path="./configs")
 def main(cfg: InferenceConfig):
+
+  cfg = OmegaConf.load(f"{cfg.path}/config.yaml")
+  print(OmegaConf.to_yaml(cfg))
+
   model, tokenizer = load_model(cfg)
   instruction = "You are a latex autocomplete model. You will be given a sentence from a proof and you need to finish the sentence. Give back the sentence in latex markup. Here is the sentence to complete: "
-  prompt = r"""
-
-  """
+  prompt = r""" The pythaogrean theorem states that $a^2 +  """
   query = f"""{instruction} {prompt}"""
   result = get_completion(query=query, model=model, tokenizer=tokenizer, device=cfg.device)
   print(result)

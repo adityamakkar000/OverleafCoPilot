@@ -5,9 +5,11 @@ from peft import LoraConfig, PeftModel, get_peft_model
 from trl import SFTTrainer
 import hydra
 from hydra.core.config_store import ConfigStore
-from omegaconf import DictConfig, OmegaConf, MISSING
+from omegaconf import OmegaConf, MISSING
 from ds import get_dataset, datasetConfig
 from dataclasses import dataclass
+import os
+import shutil
 
 @dataclass
 class ftConfig:
@@ -29,6 +31,7 @@ class ftConfig:
   logging_steps: int = MISSING
   output: str = MISSING
   name: str = MISSING
+  overwrite: bool = MISSING
 
 cs = ConfigStore.instance()
 cs.store(name="base", node=ftConfig)
@@ -37,6 +40,15 @@ cs.store(name="base", node=ftConfig)
 def main(cfg: ftConfig) -> None:
 
   print(OmegaConf.to_yaml(cfg))
+  if os.path.exists(f"{cfg.output}/{cfg.name}/config.yaml"):
+    if cfg.overwrite:
+      shutil.rmtree(f"{cfg.output}/{cfg.name}/")
+    else:
+      raise FileExistsError("The output directory already exists. Please set overwrite to true to overwrite the directory.")
+
+  os.makedirs(f"./{cfg.output}/{cfg.name}/", exist_ok=True)
+  with open(f"./{cfg.output}/{cfg.name}/config.yaml", "w") as file:
+      file.write(OmegaConf.to_yaml(cfg))
 
   model_id = cfg.model_id
   tokenizer = AutoTokenizer.from_pretrained(model_id, add_eos_token=True, padding_side='left')
@@ -74,7 +86,6 @@ def main(cfg: ftConfig) -> None:
       )
 
       return text
-
 
   text_column = [generate_prompt(data_point) for data_point in dataset["train"]]
   dataset = dataset["train"].add_column("prompt", text_column)
@@ -135,7 +146,7 @@ def main(cfg: ftConfig) -> None:
           max_steps=hyperparameters["max_steps"],
           learning_rate=hyperparameters["learning_rate"],
           logging_steps=hyperparameters["logging_steps"],
-          output_dir=f"./{output_path}/{name}/checkpoints",
+          output_dir=f"{output_path}/{name}/checkpoints",
           optim=hyperparameters["optim"],
           save_strategy='epoch',
       ),
@@ -143,13 +154,13 @@ def main(cfg: ftConfig) -> None:
   )
 
   trainer.train()
-  new_model = f"./{output_path}/{name}/finetuned_models/"
+  new_model = f"{output_path}/{name}/finetuned_models/"
   trainer.model.save_pretrained(new_model)
 
   merged_model = PeftModel.from_pretrained(model, new_model)
   merged_model = merged_model.merge_and_unload()
 
-  merged_path = f"./{output_path}/{name}/merged_models/"
+  merged_path = f"{output_path}/{name}/merged_models/"
   merged_model.save_pretrained(merged_path)
   tokenizer.save_pretrained(merged_path)
 

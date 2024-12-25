@@ -27,3 +27,4 @@ learning_rate: 2e-4
 logging_steps: 1
 output: ./results
 name: latex
+overwrite: True
