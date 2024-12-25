@@ -64,7 +64,7 @@ def main(cfg: ftConfig) -> None:
 
   def generate_prompt(data_point):
       prefix_text = cfg.prefix_txt
-      text = text = (
+      text = (
           r""" <start_of_turn>user {prefix_text} {instruction}  {input} <end_of_turn> <start_of_turn>model {output} <end_of_turn>""".format(
               prefix_text=prefix_text,
               instruction=data_point["instruction"],
@@ -152,8 +152,6 @@ def main(cfg: ftConfig) -> None:
   merged_path = f"./{output_path}/{name}/merged_models/"
   merged_model.save_pretrained(merged_path)
   tokenizer.save_pretrained(merged_path)
-  tokenizer.pad_token = tokenizer.eos_token
-  tokenizer.padding_side = "right"
 
 if __name__ == "__main__":
   main()
