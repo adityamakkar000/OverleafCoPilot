@@ -1,3 +1,5 @@
 **/.venv/*
 **/dataset/*
 **/outputs/*
+*.pyc
+*.ipynb 
