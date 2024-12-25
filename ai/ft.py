@@ -21,7 +21,6 @@ class ftConfig:
   lora_alpha: int = MISSING
   dataCFG: datasetConfig = MISSING
   prefix_txt: str = MISSING
-  device: str = MISSING
   per_device_train_batch_size: int = MISSING
   gradient_accumulation_steps: int = MISSING
   optim: str = MISSING
@@ -71,9 +70,12 @@ def main(cfg: ftConfig) -> None:
     "logging_steps": cfg.logging_steps,
   }
   name = cfg.name
-  device = cfg.device
-
-
+  device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+  if torch.backends.mps.is_available():
+    device = 'mps'
+  print(f"Device: {device}")
+  
+  
   def generate_prompt(data_point):
       prefix_text = cfg.prefix_txt
       text = (
