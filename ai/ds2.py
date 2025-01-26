@@ -8,15 +8,15 @@ from dataclasses import dataclass
 
 @dataclass
 class datasetConfig:
-  instruction: str = MISSING
-  inputPath: str = MISSING
-  outputPath: str = MISSING
-  cutoff: int = MISSING
-  lb: float = MISSING
-  up: float = MISSING
+    instruction: str = MISSING
+    inputPath: str = MISSING
+    outputPath: str = MISSING
+    cutoff: int = MISSING
+    lb: float = MISSING
+    up: float = MISSING
+
 
 def main(dataCFG: datasetConfig):
-
     instruction = r"""{instruction}""".format(instruction=dataCFG.instruction)
     path = dataCFG.inputPath
     with open(path, "r") as file:
