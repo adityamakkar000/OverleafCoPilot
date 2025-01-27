@@ -1,0 +1,6 @@
+defaults:
+  - main
+  - _self_
+
+model_id: deepseek-ai/deepseek-math-7b-instruct
+name: deepseek

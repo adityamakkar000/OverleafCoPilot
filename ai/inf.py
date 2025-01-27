@@ -10,10 +10,6 @@ from dataclasses import dataclass
 @dataclass
 class InferenceConfig:
     path: str = MISSING
-    model_id: str = MISSING
-    output: str = MISSING
-    name: str = MISSING
-
 
 class ModelManager:
     def __init__(self):
@@ -46,6 +42,8 @@ class ModelManager:
         <end_of_turn>\n<start_of_turn>model
         """
         prompt = prompt_template.format(query=query)
+        tokenizer.pad_token = tokenizer.eos_token
+        tokenizer.padding_side = "left"
 
         encodeds = tokenizer(prompt, return_tensors="pt", add_special_tokens=True)
         model_inputs = encodeds.to(self.device)
@@ -64,7 +62,7 @@ def setup_config_store():
     cs.store(name="inference_config", node=InferenceConfig)
 
 
-@hydra.main(version_base=None, config_path="./configs")
+@hydra.main(version_base=None, config_path="./configs", config_name="inference")
 def main(cfg: InferenceConfig):
     cfg = OmegaConf.load(f"{cfg.path}/config.yaml")
     print(OmegaConf.to_yaml(cfg))
@@ -72,12 +70,18 @@ def main(cfg: InferenceConfig):
     model_manager = ModelManager()
     model, tokenizer = model_manager.load_model(cfg)
 
-    instruction = "You are a latex autocomplete model. You will be given a sentence from a proof and you need to finish the sentence. Give back the sentence in latex markup. Here is the sentence to complete: "
-    prompt = r""" We will argue by contradiction. Let us say we have $G_1$ and $G_2$ such that """
-    query = f"{instruction} {prompt}"
+    instruction = cfg.dataCFG.instruction
 
-    result = model_manager.get_completion(query=query, model=model, tokenizer=tokenizer)
-    print(result)
+
+    prompt_input = input("Enter prompt: ")
+    while prompt_input != "exit":
+        prompt = r"""{}""".format(prompt_input)
+        query = f"{instruction} {prompt}"
+
+        result = model_manager.get_completion(query=query, model=model, tokenizer=tokenizer)
+        print(result)
+
+        prompt_input = input("Enter prompt: ")
 
 
 if __name__ == "__main__":
