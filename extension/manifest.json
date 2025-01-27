@@ -10,7 +10,7 @@
       {
           "matches": ["https://*.overleaf.com/project/*"],
           "run_at": "document_end",
-          "js": ["divyatest.js"],
+          "js": ["copyv2.js"],
           "all_frames": true
       }
   ]
