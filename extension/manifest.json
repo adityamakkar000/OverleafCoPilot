@@ -1,7 +1,7 @@
 {
   "name": "Overleaf Copilot",
   "version": "1.0.0",
-  "description": "Vim keybinds for MAC google docs",
+  "description": "Overleaf Copilot",
   "manifest_version": 3,
   "permissions": [
     "activeTab"
@@ -10,7 +10,7 @@
       {
           "matches": ["https://*.overleaf.com/project/*"],
           "run_at": "document_end",
-          "js": ["copilotInject.js"],
+          "js": ["divyatest.js"],
           "all_frames": true
       }
   ]
