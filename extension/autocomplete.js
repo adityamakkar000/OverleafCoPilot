@@ -1,31 +1,56 @@
 function copyConsole() {
     const handler = async (event) => {
-
-        // console.log(event);
         if (!event.altKey) return;
 
         event.preventDefault();
         event.stopPropagation();
 
-        const activeLine = document.querySelector('.cm-activeLine');
-        if (!activeLine) {
-            console.log("No active line found");
-            return;
-        } else {
-            console.log("Active line content:", activeLine.textContent);
-        }
-        // If the element is contenteditable or an input/textarea, we can also set its value directly
-            const currentValue = activeLine.value || activeLine.textContent;
-            const newValue = currentValue + 'himynameis';
-            if (activeLine.value !== undefined) {
-                activeLine.value = newValue;
-            } else {
-                activeLine.textContent = newValue;
-            }
-            console.log("currentvalue:", currentValue);
-        
-        console.log("Attempted to insert 'a' into:", activeLine);
+        for (let i = 0; i < 6; i++) {
+            const shiftUpEvent = new KeyboardEvent("keydown", {
+                key: "ArrowUp",
+                code: "ArrowUp",
+                shiftKey: true, 
+                bubbles: true,
+            });
 
+            const focusedElement = document.activeElement;
+            if (focusedElement) {
+                focusedElement.dispatchEvent(shiftUpEvent);
+            } else {
+                document.dispatchEvent(shiftUpEvent);
+            }
+        }
+
+        const selection = window.getSelection();
+        const selectedText = selection.toString();
+        
+        console.log(selectedText);
+
+        const downArrowEvent = new KeyboardEvent("keydown", {
+            key: "ArrowDown",
+            code: "ArrowDown",
+            bubbles: true,
+        });
+
+        const focusedElement = document.activeElement;
+        if (focusedElement) {
+            focusedElement.dispatchEvent(downArrowEvent);
+        } else {
+            document.dispatchEvent(downArrowEvent);
+        }
+
+        const editor = document.querySelector('.cm-editor');
+        //console.log("Found editor:", editor); 
+
+        if (editor) {
+            const view = editor.querySelector('.cm-content');
+            if (view) {
+                const text = 'himynameis';
+                const selection = window.getSelection();
+                const range = selection.getRangeAt(0);
+                range.insertNode(document.createTextNode(text));
+            }
+        }
     };
 
     document.addEventListener("keydown", handler, true);
