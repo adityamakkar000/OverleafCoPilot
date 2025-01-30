@@ -35,7 +35,7 @@ toggler.style.zIndex = 999
 toggler.style.top = 'calc(100vh - 48px)'
 toggler.style.right = '0px'
 toggler.style.background = 'none'
-toggler.style.color = 'white'
+toggler.style.color = 'black'
 toggler.style.border = 'none'
 toggler.onclick = toggle
 document.body.appendChild(toggler)
