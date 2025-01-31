@@ -48,14 +48,14 @@ class ModelManager:
 
         return self.tokenizer.apply_chat_template(message, add_generation_prompt=True, return_tensors="pt")
 
-    def __call__(self, input: str, cache: bool = False) -> str:
+    def __call__(self, input: str) -> str:
         self.tokenizer.pad_token = self.tokenizer.eos_token
         self.tokenizer.padding_side = "left"
 
         input_tensor = self.generate_prompt(input)
         outputs = self.model.generate(
             input_tensor.to(self.device),
-            max_new_tokens=100,
+            max_new_tokens=75,
             do_sample=True,
             pad_token_id=self.tokenizer.eos_token_id,
             use_cache=True,
@@ -76,29 +76,31 @@ def main(cfg: InferenceConfig):
     model_manager = ModelManager(cfg)
 
     prompt_input = r"""
-    If we add $W_1 + W_2$ we obtain $\begin{pmatrix}
-    a + \alpha & -a + \beta \\
-    b - \alpha & c + \gamma \\
-\end{pmatrix}$. Thus we can set $u= a + \alpha, v = -a + \beta, t = b - \alpha, z = c + \gamma \in F$ and we obtain $W_1 + W_2$ is off the form $\begin{pmatrix}
-    u & v \\ t & z \\
-\end{pmatrix}$ and thus we have 4 separate scalars. Therefore if we have the set $S = \{ \begin{pmatrix}
-    1 & 0 \\ 0 & 0 \\
-\end{pmatrix}, \begin{pmatrix}
-    0 & 1 \\ 0 & 0 \\
-\end{pmatrix} , \begin{pmatrix}
-    0 & 0 \\ 1 & 0 \\
-\end{pmatrix}, \begin{pmatrix}
-    0 & 0 \\ 0 & 1 \\
-\end{pmatrix}\}$ and $t_1, t_2, t_3, t_4 \in F$ then as a linear combination we obtain $0 = \begin{pmatrix}
-    t_1 & t_2 \\ t_3 & t_4
-\end{pmatrix}$
-"""
-    start = time.time()
-    result = model_manager(
-        prompt_input, cache=False
-    )
-    print(f"\n{result}")
-    print(f"Time taken: {time.time() - start}")
+        If we add $W_1 + W_2$ we obtain $\begin{pmatrix}
+        a + \alpha & -a + \beta \\
+        b - \alpha & c + \gamma \\
+        \end{pmatrix}$. Thus we can set $u= a + \alpha, v = -a + \beta, t = b - \alpha, z = c + \gamma \in F$ and we obtain $W_1 + W_2$ is off the form $\begin{pmatrix}
+            u & v \\ t & z \\
+        \end{pmatrix}$ and thus we have 4 separate scalars. Therefore if we have the set $S = \{ \begin{pmatrix}
+            1 & 0 \\ 0 & 0 \\
+        \end{pmatrix}, \begin{pmatrix}
+            0 & 1 \\ 0 & 0 \\
+        \end{pmatrix} , \begin{pmatrix}
+            0 & 0 \\ 1 & 0 \\
+        \end{pmatrix}, \begin{pmatrix}
+            0 & 0 \\ 0 & 1 \\
+        \end{pmatrix}\}$ and $t_1, t_2, t_3, t_4 \in F$ then as a linear combination we obtain $0 = \begin{pmatrix}
+            t_1 & t_2 \\ t_3 & t_4
+        \end{pmatrix}$
+    """
+
+    for _ in range(10):
+        start = time.time()
+        result = model_manager(
+            prompt_input
+        )
+        print(f"\n{result}")
+        print(f"Time taken on step {_}: {time.time() - start}")
 
 
 

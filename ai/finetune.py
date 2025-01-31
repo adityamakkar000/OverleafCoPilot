@@ -21,7 +21,6 @@ class ftConfig:
     r: int = MISSING
     lora_alpha: int = MISSING
     dataCFG: DatasetConfig = MISSING
-    prefix_txt: str = MISSING
     per_device_train_batch_size: int = MISSING
     gradient_accumulation_steps: int = MISSING
     optim: str = MISSING
@@ -120,8 +119,6 @@ class ModelTrainer:
         lora_config = self.setup_model()
         train_data, test_data = self.prepare_dataset()
 
-
-
         trainable, total = self.model.get_nb_trainable_parameters()
         print(
             f"Trainable: {trainable} | total: {total} | Percentage: {trainable / total * 100:.4f}%"
@@ -142,6 +139,8 @@ class ModelTrainer:
                 logging_steps=self.cfg.logging_steps,
                 output_dir=f"{self.cfg.output}/{self.cfg.name}/checkpoints",
                 optim=self.cfg.optim,
+                logging_dir=f"{self.cfg.output}/{self.cfg.name}/logs",
+                report_to=["tensorboard"],
                 save_strategy="epoch",
             ),
         )
