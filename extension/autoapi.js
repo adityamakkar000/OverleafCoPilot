@@ -9,7 +9,7 @@ function copyConsole() {
             const shiftUpEvent = new KeyboardEvent("keydown", {
                 key: "ArrowUp",
                 code: "ArrowUp",
-                shiftKey: true, 
+                shiftKey: true,
                 bubbles: true,
             });
 
@@ -20,13 +20,13 @@ function copyConsole() {
 
         const sendPost = async () => {
             try {
-                const url = 'http://10.39.26.240:3000/post'; 
+                const url = 'http://10.39.15.64:3000/post';
                 const body = JSON.stringify({ text: selectedText });
                 const headers = { 'Content-Type': 'application/json'};
                 const method = 'POST';
-                const response = await fetch(url, { 
-                    method, 
-                    headers, 
+                const response = await fetch(url, {
+                    method,
+                    headers,
                     body,
                 });
                 gentext = await response.json();
@@ -36,9 +36,9 @@ function copyConsole() {
                 console.error('Error:', error);
             }
         };
-        
+
         await sendPost();
-        
+
         console.log(selectedText);
 
         const downArrowEvent = new KeyboardEvent("keydown", {

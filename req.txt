@@ -6,4 +6,6 @@ datasets==2.17.0
 transformers==4.38.0
 hydra-core
 torch
-
+tensorboard
+flask
+flask_cors 
