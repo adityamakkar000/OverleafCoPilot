@@ -1,26 +1,20 @@
 
 defaults:
   - base
+  - dataCFG: main
   - _self_
 
-model_id: google/gemma-2b-it
-prefix_txt: Below is an instruction that describes a task. Write a response that completes the request.\n\n
 seed: 1234
 test_size: 0.2
-r: 8
-lora_alpha: 4
-dataCFG:
-  instruction: You are a latex autocomplete model. You will be given a sentence from a proof and you need to finish the sentence. Give back the sentence in latex markup. Here is the sentence
-  inputPath: ./dataset/latex.txt
-  outputPath: ./dataset/latex.csv
+r: 1
+lora_alpha: 1
 modules_limit: 10
-per_device_train_batch_size: 8
+per_device_train_batch_size: 1
 gradient_accumulation_steps: 1
 optim: adamw_torch
-warmup_steps: 0.03
-max_steps: 20
-learning_rate: 2e-4
+warmup_steps: 0.1
+max_steps: 100
+learning_rate: 1e-4
 logging_steps: 1
 output: ./results
-name: latex
 overwrite: True

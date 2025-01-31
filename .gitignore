@@ -3,8 +3,9 @@
 **/results/*
 **/outputs/*
 *.pyc
-*.ipynb
 **/venv/*
 **/node_modules/*
 **/dist/*
 .env
+**/output/*
+*ipynb 

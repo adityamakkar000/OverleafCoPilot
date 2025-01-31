@@ -11,10 +11,10 @@ from dataclasses import dataclass
 import os
 import shutil
 
-
 @dataclass
 class ftConfig:
     model_id: str = MISSING
+    precision: str = "bfloat16"
     seed: int = MISSING
     test_size: float = MISSING
     modules_limit: int = MISSING
@@ -32,7 +32,6 @@ class ftConfig:
     output: str = MISSING
     name: str = MISSING
     overwrite: bool = MISSING
-
 
 class ModelTrainer:
     def __init__(self, cfg: ftConfig):
@@ -57,36 +56,55 @@ class ModelTrainer:
 
         os.makedirs(f"./{self.cfg.output}/{self.cfg.name}/", exist_ok=True)
         with open(f"./{self.cfg.output}/{self.cfg.name}/config.yaml", "w") as file:
-            file.write(OmegaConf.to_yaml(self.cfg))
+            file.write(str(self.cfg))
 
     def prepare_dataset(self):
-        def generate_prompt(data_point):
-            prefix_text = self.cfg.prefix_txt
-            text = r""" <start_of_turn>user {prefix_text} {instruction}  {input} <end_of_turn> <start_of_turn>model {output} <end_of_turn>""".format(
-                prefix_text=prefix_text,
-                instruction=data_point["instruction"],
-                input=data_point["input"],
-                output=data_point["output"],
-            )
+        def generate_prompt(data_point, tokenizer):
+            message =  [{
+                "role": "user",
+                "content": f"""{data_point["instruction"]} {data_point["input"]}"""
+            },{
+                "role": "assistant",
+                "content": data_point["output"]
+            }
+                        ]
 
+            prompt = tokenizer.apply_chat_template(message, tokenize=False)
+            tokenized_prompt = tokenizer(prompt, return_tensors="pt")
+
+            text = {
+                'prompt': prompt,
+                **tokenized_prompt
+            }
             return text
 
-        ds = get_dataset(self.cfg.dataCFG)
-        text_column = [generate_prompt(data_point) for data_point in ds["train"]]
-        ds = ds["train"].add_column("prompt", text_column)
+        ds = get_dataset(self.cfg.dataCFG)["train"]
+        ds = ds.map(lambda samples: generate_prompt(samples, self.tokenizer), batched=False)
         ds = ds.shuffle(seed=self.cfg.seed)
-        ds = ds.map(lambda samples: self.tokenizer(samples["prompt"]), batched=True)
         ds = ds.train_test_split(test_size=self.cfg.test_size)
+
         return ds["train"], ds["test"]
 
     def setup_model(self):
         self.tokenizer = AutoTokenizer.from_pretrained(
             self.cfg.model_id, add_eos_token=True, padding_side="left"
         )
+
+        if self.cfg.precision == "bfloat16":
+            dp = torch.bfloat16
+        elif self.cfg.precision == "float32":
+            dp = torch.float32
+        elif self.cfg.precision == "float16":
+            dp = torch.float16
+        else:
+            raise ValueError("Invalid precision value.")
+
+
         self.model = AutoModelForCausalLM.from_pretrained(
-            self.cfg.model_id, device_map=self.device
+            self.cfg.model_id,torch_dtype=dp , device_map=self.device
         )
-        self.model.gradient_checkpointing_enable()
+        print(f"Model {self.cfg.model_id} loaded successfully on {self.device} @ {dp} precision.")
+
 
         modules = self._find_all_linear_names()
         target_modules = (
@@ -122,6 +140,11 @@ class ModelTrainer:
 
         self.tokenizer.pad_token = self.tokenizer.eos_token
         self.tokenizer.padding_side = "right"
+
+        trainable, total = self.model.get_nb_trainable_parameters()
+        print(
+            f"Trainable: {trainable} | total: {total} | Percentage: {trainable / total * 100:.4f}%"
+        )
 
         trainer = SFTTrainer(
             model=self.model,
@@ -160,17 +183,14 @@ class ModelTrainer:
         merged_model.save_pretrained(merged_path)
         self.tokenizer.save_pretrained(merged_path)
 
-
 cs = ConfigStore.instance()
 cs.store(name="base", node=ftConfig)
-
 
 @hydra.main(version_base=None, config_path="./configs")
 def main(cfg: ftConfig) -> None:
     print(OmegaConf.to_yaml(cfg))
     trainer = ModelTrainer(cfg)
     trainer.train()
-
 
 if __name__ == "__main__":
     main()
