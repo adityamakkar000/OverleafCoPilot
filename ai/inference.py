@@ -5,7 +5,8 @@ import hydra
 from hydra.core.config_store import ConfigStore
 from omegaconf import OmegaConf, MISSING
 from dataclasses import dataclass
-from ft import ftConfig
+from finetune import ftConfig
+import time
 
 @dataclass
 class InferenceConfig:
@@ -47,7 +48,7 @@ class ModelManager:
 
         return self.tokenizer.apply_chat_template(message, add_generation_prompt=True, return_tensors="pt")
 
-    def __call__(self, input: str) -> str:
+    def __call__(self, input: str, cache: bool = False) -> str:
         self.tokenizer.pad_token = self.tokenizer.eos_token
         self.tokenizer.padding_side = "left"
 
@@ -56,7 +57,8 @@ class ModelManager:
             input_tensor.to(self.device),
             max_new_tokens=100,
             do_sample=True,
-            pad_token_id=self.tokenizer.eos_token_id
+            pad_token_id=self.tokenizer.eos_token_id,
+            use_cache=True,
         )
 
         text = self.tokenizer.decode(outputs[0][input_tensor.shape[1]:], skip_special_tokens=True)
@@ -91,10 +93,13 @@ def main(cfg: InferenceConfig):
     t_1 & t_2 \\ t_3 & t_4
 \end{pmatrix}$
 """
+    start = time.time()
     result = model_manager(
-        prompt_input
+        prompt_input, cache=False
     )
-    print(result)
+    print(f"\n{result}")
+    print(f"Time taken: {time.time() - start}")
+
 
 
 if __name__ == "__main__":

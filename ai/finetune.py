@@ -59,27 +59,8 @@ class ModelTrainer:
             file.write(str(self.cfg))
 
     def prepare_dataset(self):
-        def generate_prompt(data_point, tokenizer):
-            message =  [{
-                "role": "user",
-                "content": f"""{data_point["instruction"]} {data_point["input"]}"""
-            },{
-                "role": "assistant",
-                "content": data_point["output"]
-            }
-                        ]
-
-            prompt = tokenizer.apply_chat_template(message, tokenize=False)
-            tokenized_prompt = tokenizer(prompt, return_tensors="pt")
-
-            text = {
-                'prompt': prompt,
-                **tokenized_prompt
-            }
-            return text
-
-        ds = get_dataset(self.cfg.dataCFG)["train"]
-        ds = ds.map(lambda samples: generate_prompt(samples, self.tokenizer), batched=False)
+        self.tokenizer.padding_side = 'right'
+        ds = get_dataset(self.cfg.dataCFG, self.tokenizer)
         ds = ds.shuffle(seed=self.cfg.seed)
         ds = ds.train_test_split(test_size=self.cfg.test_size)
 
@@ -87,8 +68,9 @@ class ModelTrainer:
 
     def setup_model(self):
         self.tokenizer = AutoTokenizer.from_pretrained(
-            self.cfg.model_id, add_eos_token=True, padding_side="left"
+            self.cfg.model_id, add_eos_token=True, padding_side="right"
         )
+        self.tokenizer.pad_token = self.tokenizer.eos_token
 
         if self.cfg.precision == "bfloat16":
             dp = torch.bfloat16
@@ -138,8 +120,7 @@ class ModelTrainer:
         lora_config = self.setup_model()
         train_data, test_data = self.prepare_dataset()
 
-        self.tokenizer.pad_token = self.tokenizer.eos_token
-        self.tokenizer.padding_side = "right"
+
 
         trainable, total = self.model.get_nb_trainable_parameters()
         print(
@@ -152,7 +133,6 @@ class ModelTrainer:
             eval_dataset=test_data,
             dataset_text_field="prompt",
             peft_config=lora_config,
-            max_seq_length=250,
             args=transformers.TrainingArguments(
                 per_device_train_batch_size=self.cfg.per_device_train_batch_size,
                 gradient_accumulation_steps=self.cfg.gradient_accumulation_steps,
@@ -163,9 +143,6 @@ class ModelTrainer:
                 output_dir=f"{self.cfg.output}/{self.cfg.name}/checkpoints",
                 optim=self.cfg.optim,
                 save_strategy="epoch",
-            ),
-            data_collator=transformers.DataCollatorForLanguageModeling(
-                self.tokenizer, mlm=False
             ),
         )
 
