@@ -73,13 +73,28 @@ def main(cfg: InferenceConfig):
 
     model_manager = ModelManager(cfg)
 
-    prompt_input = input("Enter prompt: ")
-    while prompt_input != "exit":
-        result = model_manager(
-            prompt_input
-        )
-        print(result)
-        prompt_input = input("Enter prompt: ")
+    prompt_input = r"""
+    If we add $W_1 + W_2$ we obtain $\begin{pmatrix}
+    a + \alpha & -a + \beta \\
+    b - \alpha & c + \gamma \\
+\end{pmatrix}$. Thus we can set $u= a + \alpha, v = -a + \beta, t = b - \alpha, z = c + \gamma \in F$ and we obtain $W_1 + W_2$ is off the form $\begin{pmatrix}
+    u & v \\ t & z \\
+\end{pmatrix}$ and thus we have 4 separate scalars. Therefore if we have the set $S = \{ \begin{pmatrix}
+    1 & 0 \\ 0 & 0 \\
+\end{pmatrix}, \begin{pmatrix}
+    0 & 1 \\ 0 & 0 \\
+\end{pmatrix} , \begin{pmatrix}
+    0 & 0 \\ 1 & 0 \\
+\end{pmatrix}, \begin{pmatrix}
+    0 & 0 \\ 0 & 1 \\
+\end{pmatrix}\}$ and $t_1, t_2, t_3, t_4 \in F$ then as a linear combination we obtain $0 = \begin{pmatrix}
+    t_1 & t_2 \\ t_3 & t_4
+\end{pmatrix}$
+"""
+    result = model_manager(
+        prompt_input
+    )
+    print(result)
 
 
 if __name__ == "__main__":
