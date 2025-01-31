@@ -3,6 +3,8 @@ from typing import List, Dict
 import datasets as d
 import csv
 from omegaconf import MISSING
+import os
+from transformers import AutoTokenizer, AutoModelForCausalLM
 
 
 @dataclass
@@ -10,6 +12,7 @@ class DatasetConfig:
     instruction: str = MISSING
     inputPath: str = MISSING
     outputPath: str = MISSING
+    processPath: str = MISSING
     cutoff: int = 7
 
 
@@ -20,7 +23,7 @@ class DatasetProcessor:
     def read_data(self) -> List[str]:
         with open(self.config.inputPath, "r") as file:
             data = file.read()
-        return self._preprocess_data(data)
+        self.dataset = self._preprocess_data(data)
 
     def _preprocess_data(self, data: str) -> List[str]:
         sentences = data.split(".")
@@ -28,7 +31,8 @@ class DatasetProcessor:
             x.strip("\n\\n").replace("\n", " ").replace("  ", " ") for x in sentences
         ]
 
-    def create_dataset(self, data: List[str]) -> List[Dict]:
+    def create_dataset(self, tokenizer=None):
+        data = self.dataset
         dataset = []
         length = len(data)
         for i in range(length):
@@ -48,7 +52,9 @@ class DatasetProcessor:
                     }
                 )
 
-        return dataset
+        if tokenizer is not None:
+            self.tokenize(tokenizer)
+        self.save_dataset(dataset)
 
     def save_dataset(self, dataset: List[Dict]) -> None:
         with open(
@@ -58,32 +64,70 @@ class DatasetProcessor:
             writer.writeheader()
             writer.writerows(dataset)
 
+    def generate_prompt(self, data_point, tokenizer):
+        message =  [{
+            "role": "user",
+            "content": f"""{data_point["instruction"]} {data_point["input"]}"""
+            },
+        {
+            "role": "assistant",
+            "content": data_point["output"]
+            }
+            ]
 
-def process_dataset(config: DatasetConfig) -> None:
-    processor = DatasetProcessor(config)
-    data = processor.read_data()
-    dataset = processor.create_dataset(data)
-    processor.save_dataset(dataset)
+        prompt = tokenizer.apply_chat_template(message, tokenize=False)
+        tokenized_prompt = tokenizer(prompt, return_tensors="pt")
 
+        text = {
+            'prompt': prompt,
+            **tokenized_prompt
+        }
+        return text
 
-def get_dataset(config: DatasetConfig):
-    process_dataset(config)
-    ds = d.load_dataset(config.outputPath[-3:], data_files=config.outputPath)
+    def tokenize(self, tokenizer):
+        ds = d.load_dataset("csv", data_files=self.config.outputPath)["train"]
+        ds = ds.map(lambda samples: self.generate_prompt(samples, tokenizer), batched=False)
+        print(self.config.processPath)
+        ds.save_to_disk(self.config.processPath)
+
+        print("saved to disk")
+
+    def __call__(self, tokenizer):
+
+        self.read_data()
+        self.create_dataset(tokenizer)
+
+def get_dataset(config: DatasetConfig, tokenizer=None):
+
+    path = config.processPath if tokenizer is not None else config.outputPath
+    if not os.path.exists(path):
+        DatasetProcessor(config)(tokenizer)
+
+    if tokenizer is None:
+        ds = d.load_dataset("csv", data_files=path)
+    else:
+        ds = d.load_from_disk(path)
     return ds
-
 
 if __name__ == "__main__":
     dataCFG = {
         "instruction": "You are a latex autocomplete model. You will be given a sentence from a proof and you need to finish the sentence. Give back the sentence in latex markup. Here is the sentence",
         "inputPath": "./dataset/latex.txt",
         "outputPath": "./dataset/latex.csv",
+        "processPath": "./dataset/latex/",
         "cutoff": 7,
     }
+
+    tokenizer = AutoTokenizer.from_pretrained(
+        "google/gemma-2b-it", add_eos_token=True, padding_side="right"
+    )
 
     cfg = DatasetConfig(
         instruction=dataCFG["instruction"],
         inputPath=dataCFG["inputPath"],
         outputPath=dataCFG["outputPath"],
+        processPath=dataCFG["processPath"],
     )
 
-    process_dataset(cfg)
+    ds = get_dataset(cfg, tokenizer)
+    print(ds)

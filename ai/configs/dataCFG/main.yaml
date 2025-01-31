@@ -1,2 +1,4 @@
 inputPath: ./dataset/latex.txt
 outputPath: ./dataset/latex.csv
+processPath: ./dataset/latex
+
