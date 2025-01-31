@@ -16,6 +16,8 @@ function copyConsole() {
             document.activeElement.dispatchEvent(shiftUpEvent);
         }
         const selectedText = window.getSelection().toString();
+        let gentext = " ";
+
         const sendPost = async () => {
             try {
                 const url = 'http://10.39.26.240:3000/post'; 
@@ -27,14 +29,15 @@ function copyConsole() {
                     headers, 
                     body,
                 });
-                const data = await response.text();
-                console.log('Success:', data);
+                gentext = await response.json();
+                console.log('Success:', gentext.data);
+                gentext = gentext.data;
             } catch (error) {
                 console.error('Error:', error);
             }
         };
         
-        sendPost();
+        await sendPost();
         
         console.log(selectedText);
 
@@ -43,19 +46,16 @@ function copyConsole() {
             code: "ArrowDown",
             bubbles: true,
         });
-
         document.activeElement.dispatchEvent(downArrowEvent);
 
         const editor = document.querySelector('.cm-editor');
-        //console.log("Found editor:", editor); 
 
         if (editor) {
             const view = editor.querySelector('.cm-content');
             if (view) {
-                const text = 'himynameis';
                 const selection = window.getSelection();
                 const range = selection.getRangeAt(0);
-                range.insertNode(document.createTextNode(text));
+                range.insertNode(document.createTextNode(gentext));
             }
         }
     };
