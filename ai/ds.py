@@ -4,7 +4,7 @@ import datasets as d
 import csv
 from omegaconf import MISSING
 import os
-from transformers import AutoTokenizer, AutoModelForCausalLM
+from transformers import AutoTokenizer
 
 
 @dataclass
@@ -109,6 +109,7 @@ def get_dataset(config: DatasetConfig, tokenizer=None):
         ds = d.load_from_disk(path)
     return ds
 
+# testing 
 if __name__ == "__main__":
     dataCFG = {
         "instruction": "You are a latex autocomplete model. You will be given a sentence from a proof and you need to finish the sentence. Give back the sentence in latex markup. Here is the sentence",
