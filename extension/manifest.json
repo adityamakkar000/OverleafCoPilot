@@ -10,7 +10,7 @@
       {
           "matches": ["https://*.overleaf.com/project/*"],
           "run_at": "document_end",
-          "js": ["autoapi.js"],
+          "js": ["sentence.js"],
           "all_frames": true
       }
   ]
