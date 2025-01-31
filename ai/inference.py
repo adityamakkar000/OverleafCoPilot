@@ -8,16 +8,20 @@ from dataclasses import dataclass
 from finetune import ftConfig
 import time
 
+
 @dataclass
 class InferenceConfig:
     path: str = MISSING
+    tokens: int = 75
 
 class ModelManager:
-    def __init__(self, cfg: ftConfig):
+    def __init__(self, cfg: ftConfig, tokens:int):
         self.device = self._get_device()
         self.model, self.tokenizer = self.load_model(cfg)
+        self.model.eval()
         self.device = self._get_device()
         self.instruction = cfg.dataCFG.instruction
+        self.tokens = tokens
 
     @staticmethod
     def _get_device():
@@ -34,6 +38,12 @@ class ModelManager:
         merged_model = PeftModel.from_pretrained(
             model, f"{cfg.output}/{cfg.name}/finetuned_models/"
         )
+        try:
+            merged_model = torch.compile(merged_model)
+            print("Model compiled with torch.compile!")
+        except Exception as e:
+            print(f"torch.compile not used: {e}")
+
         merged_model = merged_model.merge_and_unload()
         tokenizer = AutoTokenizer.from_pretrained(
             cfg.model_id, add_eos_token=True, padding_side="left"
@@ -55,7 +65,7 @@ class ModelManager:
         input_tensor = self.generate_prompt(input)
         outputs = self.model.generate(
             input_tensor.to(self.device),
-            max_new_tokens=75,
+            max_new_tokens=self.tokens,
             do_sample=True,
             pad_token_id=self.tokenizer.eos_token_id,
             use_cache=True,
@@ -70,10 +80,12 @@ def setup_config_store():
 
 @hydra.main(version_base=None, config_path="./configs", config_name="inference")
 def main(cfg: InferenceConfig):
+    print(OmegaConf.to_yaml(cfg))
+    tokens = cfg.tokens
     cfg = OmegaConf.load(f"{cfg.path}/config.yaml")
     print(OmegaConf.to_yaml(cfg))
 
-    model_manager = ModelManager(cfg)
+    model_manager = ModelManager(cfg, tokens)
 
     prompt_input = r"""
         If we add $W_1 + W_2$ we obtain $\begin{pmatrix}

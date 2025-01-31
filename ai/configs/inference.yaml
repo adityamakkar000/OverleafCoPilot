@@ -3,3 +3,4 @@ defaults:
   - _self_
 
 path: ./results/latex
+tokens: 40

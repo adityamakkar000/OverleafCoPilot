@@ -86,6 +86,11 @@ class ModelTrainer:
         )
         print(f"Model {self.cfg.model_id} loaded successfully on {self.device} @ {dp} precision.")
 
+        try:
+            self.model = torch.compile(self.model)
+            print("Model compiled with torch.compile!")
+        except Exception as e:
+            print(f"torch.compile not used: {e}")
 
         modules = self._find_all_linear_names()
         target_modules = (
@@ -124,6 +129,7 @@ class ModelTrainer:
             f"Trainable: {trainable} | total: {total} | Percentage: {trainable / total * 100:.4f}%"
         )
 
+        self.model.train()
         trainer = SFTTrainer(
             model=self.model,
             train_dataset=train_data,

@@ -15,7 +15,6 @@ class DatasetConfig:
     processPath: str = MISSING
     cutoff: int = 7
 
-
 class DatasetProcessor:
     def __init__(self, config: DatasetConfig):
         self.config = config
@@ -109,7 +108,7 @@ def get_dataset(config: DatasetConfig, tokenizer=None):
         ds = d.load_from_disk(path)
     return ds
 
-# testing 
+# testing
 if __name__ == "__main__":
     dataCFG = {
         "instruction": "You are a latex autocomplete model. You will be given a sentence from a proof and you need to finish the sentence. Give back the sentence in latex markup. Here is the sentence",
