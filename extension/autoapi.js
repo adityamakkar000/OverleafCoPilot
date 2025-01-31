@@ -5,15 +5,26 @@ function copyConsole() {
         event.preventDefault();
         event.stopPropagation();
 
-        for (let i = 0; i < 6; i++) {
-            const shiftUpEvent = new KeyboardEvent("keydown", {
-                key: "ArrowUp",
-                code: "ArrowUp",
+        for (let i = 0; i < 7; i++) {
+            const cmdShiftRightEvent = new KeyboardEvent("keydown", {
+                key: "ArrowLeft",
+                code: "ArrowLeft",
                 shiftKey: true,
+                metaKey: true,
                 bubbles: true,
-            });
+        });
+        const shiftUpEvent = new KeyboardEvent("keydown", {
+            key: "ArrowUp",
+            code: "ArrowUp",
+            shiftKey: true,
+            bubbles: true,
+    });
+            if (i == 0) {
+                document.activeElement.dispatchEvent(cmdShiftRightEvent);
+            } else {
+                document.activeElement.dispatchEvent(shiftUpEvent);
+            }
 
-            document.activeElement.dispatchEvent(shiftUpEvent);
         }
         const selectedText = window.getSelection().toString();
         let gentext = " ";
@@ -62,5 +73,7 @@ function copyConsole() {
 
     document.addEventListener("keydown", handler);
 }
+
+
 
 copyConsole();
