@@ -8,7 +8,6 @@ from hydra.core.config_store import ConfigStore
 from omegaconf import OmegaConf, MISSING
 from ds import get_dataset, DatasetConfig
 from dataclasses import dataclass
-import safetensors
 import os
 import shutil
 
@@ -145,7 +144,7 @@ class ModelTrainer:
         trainer = SFTTrainer(
                 model=self.model,
                 train_dataset=train_data,
-                eval_dataset=test_data, 
+                eval_dataset=test_data,
                 peft_config=lora_config,
                 dataset_text_field='prompt',
                 args=transformers.TrainingArguments(
