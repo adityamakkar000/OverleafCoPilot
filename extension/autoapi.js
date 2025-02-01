@@ -5,33 +5,22 @@ function copyConsole() {
         event.preventDefault();
         event.stopPropagation();
 
-        for (let i = 0; i < 7; i++) {
-            const cmdShiftRightEvent = new KeyboardEvent("keydown", {
-                key: "ArrowLeft",
-                code: "ArrowLeft",
+        for (let i = 0; i < 6; i++) {
+            const shiftUpEvent = new KeyboardEvent("keydown", {
+                key: "ArrowUp",
+                code: "ArrowUp",
                 shiftKey: true,
-                metaKey: true,
                 bubbles: true,
-        });
-        const shiftUpEvent = new KeyboardEvent("keydown", {
-            key: "ArrowUp",
-            code: "ArrowUp",
-            shiftKey: true,
-            bubbles: true,
-    });
-            if (i == 0) {
-                document.activeElement.dispatchEvent(cmdShiftRightEvent);
-            } else {
-                document.activeElement.dispatchEvent(shiftUpEvent);
-            }
+            });
 
+            document.activeElement.dispatchEvent(shiftUpEvent);
         }
         const selectedText = window.getSelection().toString();
         let gentext = " ";
 
         const sendPost = async () => {
             try {
-                const url = 'http://10.39.15.64:3000/post';
+                const url = 'http://10.39.26.240:3000/post';
                 const body = JSON.stringify({ text: selectedText });
                 const headers = { 'Content-Type': 'application/json'};
                 const method = 'POST';
@@ -73,7 +62,5 @@ function copyConsole() {
 
     document.addEventListener("keydown", handler);
 }
-
-
 
 copyConsole();

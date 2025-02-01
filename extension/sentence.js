@@ -9,14 +9,14 @@ function copyConsole() {
             const cmdShiftRightEvent = new KeyboardEvent("keydown", {
                 key: "ArrowLeft",
                 code: "ArrowLeft",
-                shiftKey: true, 
+                shiftKey: true,
                 metaKey: true,
                 bubbles: true,
         });
         const shiftUpEvent = new KeyboardEvent("keydown", {
             key: "ArrowUp",
             code: "ArrowUp",
-            shiftKey: true, 
+            shiftKey: true,
             bubbles: true,
     });
             if (i == 0) {
@@ -27,18 +27,27 @@ function copyConsole() {
 
         }
         const selectedText = window.getSelection().toString();
+
+        const downArrowEvent = new KeyboardEvent("keydown", {
+            key: "ArrowDown",
+            code: "ArrowDown",
+            bubbles: true,
+        });
+        document.activeElement.dispatchEvent(downArrowEvent);
+
         const modifiedText = newLine(selectedText);
+
         let gentext = " ";
 
         const sendPost = async () => {
             try {
-                const url = 'http://10.39.26.240:3000/post'; 
+                const url = 'http://127.0.0.1:3000/post';
                 const body = JSON.stringify({ text: modifiedText });
                 const headers = { 'Content-Type': 'application/json'};
                 const method = 'POST';
-                const response = await fetch(url, { 
-                    method, 
-                    headers, 
+                const response = await fetch(url, {
+                    method,
+                    headers,
                     body,
                 });
                 gentext = await response.json();
@@ -48,17 +57,12 @@ function copyConsole() {
                 console.error('Error:', error);
             }
         };
-        
+
         await sendPost();
-        
+
         console.log(selectedText);
 
-        const downArrowEvent = new KeyboardEvent("keydown", {
-            key: "ArrowDown",
-            code: "ArrowDown",
-            bubbles: true,
-        });
-        document.activeElement.dispatchEvent(downArrowEvent);
+
 
         const editor = document.querySelector('.cm-editor');
 

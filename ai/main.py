@@ -18,21 +18,13 @@ def handle_post():
             return jsonify({'error': 'Model not loaded'}), 500
         if 'text' not in data:
             return jsonify({'error': 'No text field in request'}), 400
-        inp = re.sub(r'(\\pagebreak|\\section\{.*?\}|\n|\\\\+)',  data['text']).strip()
+        inp = re.sub(r'(\\pagebreak|\\section\{.*?\}|\n|\\\\+)', ' ', data['text']).strip()
         print(f"calling model on: {inp}")
         result = model_manager(inp)
         print(result)
         return jsonify({'data': result}), 200
 
-@hydra.main(version_base=None, config_path="./configs", config_name="inference")
-def main(cfg: InferenceConfig):
-    tokens = cfg.tokens
-    cfg = OmegaConf.load(f"{cfg.path}/config.yaml")
-    print(OmegaConf.to_yaml(cfg))
-
-    global model_manager
-    model_manager = ModelManager(cfg, tokens)
-
+def warmup(n):
     prompt_input = r"""
         If we add $W_1 + W_2$ we obtain $\begin{pmatrix}
         a + \alpha & -a + \beta \\
@@ -52,11 +44,24 @@ def main(cfg: InferenceConfig):
         \end{pmatrix}$
     """
 
-    start = time.time()
-    model_manager(
-        prompt_input
-    ) # warmup run
-    print(f"Time taken: {time.time() - start}")
+    for _ in range(n):
+        start = time.time()
+        model_manager(
+            prompt_input
+        ) # warmup run
+        print(f"Time taken: {time.time() - start}")
+
+@hydra.main(version_base=None, config_path="./configs", config_name="inference")
+def main(cfg: InferenceConfig):
+    tokens = cfg.tokens
+    cfg = OmegaConf.load(f"{cfg.path}/config.yaml")
+    print(OmegaConf.to_yaml(cfg))
+
+    global model_manager
+    model_manager = ModelManager(cfg, tokens)
+    warmup(3)
+
+
     app.run(host="0.0.0.0", port=3000, debug=True, use_reloader=False)
 
 

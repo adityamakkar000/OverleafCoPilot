@@ -8,8 +8,10 @@ from hydra.core.config_store import ConfigStore
 from omegaconf import OmegaConf, MISSING
 from ds import get_dataset, DatasetConfig
 from dataclasses import dataclass
+import safetensors
 import os
 import shutil
+
 
 @dataclass
 class ftConfig:
@@ -21,7 +23,7 @@ class ftConfig:
     r: int = MISSING
     lora_alpha: int = MISSING
     dataCFG: DatasetConfig = MISSING
-    per_device_train_batch_size: int = MISSING
+    batch_size: int = MISSING
     gradient_accumulation_steps: int = MISSING
     optim: str = MISSING
     warmup_steps: float = MISSING
@@ -69,7 +71,7 @@ class ModelTrainer:
         self.tokenizer = AutoTokenizer.from_pretrained(
             self.cfg.model_id, add_eos_token=True, padding_side="right"
         )
-        self.tokenizer.pad_token = self.tokenizer.eos_token
+        self.tokenizer.pad_token = self.tokenizer.pad_token
 
         if self.cfg.precision == "bfloat16":
             dp = torch.bfloat16
@@ -84,13 +86,8 @@ class ModelTrainer:
         self.model = AutoModelForCausalLM.from_pretrained(
             self.cfg.model_id,torch_dtype=dp , device_map=self.device
         )
-        print(f"Model {self.cfg.model_id} loaded successfully on {self.device} @ {dp} precision.")
 
-        try:
-            self.model = torch.compile(self.model)
-            print("Model compiled with torch.compile!")
-        except Exception as e:
-            print(f"torch.compile not used: {e}")
+        self.model.gradient_checkpointing_enable()
 
         modules = self._find_all_linear_names()
         target_modules = (
@@ -108,7 +105,25 @@ class ModelTrainer:
             task_type="CAUSAL_LM",
         )
 
-        self.model = get_peft_model(self.model, lora_config)
+        checkpoint_dir = f"{self.cfg.output}/{self.cfg.name}/checkpoints"
+        if os.path.exists(checkpoint_dir):
+            checkpoints = [os.path.join(checkpoint_dir, ckpt) for ckpt in os.listdir(checkpoint_dir)]
+
+            if checkpoints:
+                latest_checkpoint = max(checkpoints, key=os.path.getctime)
+                self.model = PeftModel.from_pretrained(self.model, latest_checkpoint)
+                print(f"Loaded checkpoint from {latest_checkpoint}")
+        else:
+            self.model = get_peft_model(self.model, lora_config)
+
+        print("\n")
+        print(f"Model {self.cfg.model_id} loaded successfully on {self.device} @ {dp} precision.")
+        trainable, total = self.model.get_nb_trainable_parameters()
+        print(
+            f"Trainable: {trainable} | total: {total} | Percentage: {trainable / total * 100:.4f}%"
+        )
+        print("\n")
+
         return lora_config
 
     def _find_all_linear_names(self):
@@ -120,34 +135,31 @@ class ModelTrainer:
         return list(lora_module_names)
 
     def train(self):
-        self.setup_output_directory()
+
         lora_config = self.setup_model()
         train_data, test_data = self.prepare_dataset()
+        self.setup_output_directory()
 
-        trainable, total = self.model.get_nb_trainable_parameters()
-        print(
-            f"Trainable: {trainable} | total: {total} | Percentage: {trainable / total * 100:.4f}%"
-        )
-
-        self.model.train()
         trainer = SFTTrainer(
             model=self.model,
             train_dataset=train_data,
             eval_dataset=test_data,
-            dataset_text_field="prompt",
             peft_config=lora_config,
+            dataset_text_field='prompt',
             args=transformers.TrainingArguments(
-                per_device_train_batch_size=self.cfg.per_device_train_batch_size,
-                gradient_accumulation_steps=self.cfg.gradient_accumulation_steps,
-                warmup_steps=self.cfg.warmup_steps,
-                max_steps=self.cfg.max_steps,
-                learning_rate=self.cfg.learning_rate,
-                logging_steps=self.cfg.logging_steps,
-                output_dir=f"{self.cfg.output}/{self.cfg.name}/checkpoints",
-                optim=self.cfg.optim,
-                logging_dir=f"{self.cfg.output}/{self.cfg.name}/logs",
-                report_to=["tensorboard"],
-                save_strategy="epoch",
+            per_device_train_batch_size=self.cfg.batch_size,
+            gradient_accumulation_steps=self.cfg.gradient_accumulation_steps,
+            warmup_steps=self.cfg.warmup_steps,
+            max_steps=self.cfg.max_steps,
+            learning_rate=self.cfg.learning_rate,
+            logging_steps=self.cfg.logging_steps,
+            output_dir=f"{self.cfg.output}/{self.cfg.name}/checkpoints",
+            optim=self.cfg.optim,
+            logging_dir=f"{self.cfg.output}/{self.cfg.name}/logs",
+            report_to=["tensorboard"],
+            save_strategy="steps",
+            save_steps=10,
+            save_total_limit=5,  # Keep only the last 5 checkpoints
             ),
         )
 

@@ -12,7 +12,7 @@ import time
 @dataclass
 class InferenceConfig:
     path: str = MISSING
-    tokens: int = 75
+    tokens: int = 100
 
 class ModelManager:
     def __init__(self, cfg: ftConfig, tokens:int):
@@ -67,7 +67,7 @@ class ModelManager:
             input_tensor.to(self.device),
             max_new_tokens=self.tokens,
             do_sample=True,
-            pad_token_id=self.tokenizer.eos_token_id,
+            pad_token_id=self.tokenizer.pad_token_id,
             use_cache=True,
         )
 

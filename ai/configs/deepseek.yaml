@@ -4,6 +4,3 @@ defaults:
 
 model_id: deepseek-ai/deepseek-math-7b-instruct
 name: deepseek
-
-dataCFG:
-  instruction: "There will be an incomplete proof. Please reason step by step to help complete the latex proof and put your final latex sentence within \\boxed{{}}. The statement is: \n"
