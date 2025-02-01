@@ -64,6 +64,8 @@ class ModelTrainer:
         ds = get_dataset(self.cfg.dataCFG, self.tokenizer)
         ds = ds.shuffle(seed=self.cfg.seed)
         ds = ds.train_test_split(test_size=self.cfg.test_size)
+        ds['test'].shuffle(seed=self.cfg.seed)
+        ds['test'] = ds['test'].select(range(10))
 
         return ds["train"], ds["test"]
 
@@ -141,27 +143,31 @@ class ModelTrainer:
         self.setup_output_directory()
 
         trainer = SFTTrainer(
-            model=self.model,
-            train_dataset=train_data,
-            eval_dataset=test_data,
-            peft_config=lora_config,
-            dataset_text_field='prompt',
-            args=transformers.TrainingArguments(
-            per_device_train_batch_size=self.cfg.batch_size,
-            gradient_accumulation_steps=self.cfg.gradient_accumulation_steps,
-            warmup_steps=self.cfg.warmup_steps,
-            max_steps=self.cfg.max_steps,
-            learning_rate=self.cfg.learning_rate,
-            logging_steps=self.cfg.logging_steps,
-            output_dir=f"{self.cfg.output}/{self.cfg.name}/checkpoints",
-            optim=self.cfg.optim,
-            logging_dir=f"{self.cfg.output}/{self.cfg.name}/logs",
-            report_to=["tensorboard"],
-            save_strategy="steps",
-            save_steps=10,
-            save_total_limit=5,  # Keep only the last 5 checkpoints
-            ),
-        )
+                model=self.model,
+                train_dataset=train_data,
+                eval_dataset=test_data, 
+                peft_config=lora_config,
+                dataset_text_field='prompt',
+                args=transformers.TrainingArguments(
+                    per_device_train_batch_size=self.cfg.batch_size,
+                    gradient_accumulation_steps=self.cfg.gradient_accumulation_steps,
+                    warmup_steps=self.cfg.warmup_steps,
+                    max_steps=self.cfg.max_steps,
+                    learning_rate=self.cfg.learning_rate,
+                    logging_steps=self.cfg.logging_steps,
+                    evaluation_strategy="steps",
+                    eval_steps=10 ,
+                    per_device_eval_batch_size=self.cfg.batch_size,
+                    output_dir=f"{self.cfg.output}/{self.cfg.name}/checkpoints",
+                    optim=self.cfg.optim,
+                    logging_dir=f"{self.cfg.output}/{self.cfg.name}/logs",
+                    report_to=["tensorboard"],
+                    save_strategy="steps",
+                    save_steps=10,
+                    save_total_limit=5,
+                ),
+            )
+
 
         trainer.train()
         self.save_models(trainer)

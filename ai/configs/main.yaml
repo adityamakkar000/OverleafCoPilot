@@ -6,9 +6,9 @@ defaults:
 
 seed: 1234
 test_size: 0.2
-r: 1
+r: 2
 precision: bfloat16
-lora_alpha: 2
+lora_alpha: 4
 modules_limit: 10
 batch_size: 1
 gradient_accumulation_steps: 1
