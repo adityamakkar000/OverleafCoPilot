@@ -6,6 +6,7 @@ from inference import ModelManager, InferenceConfig, setup_config_store
 import regex as re
 import time
 
+
 setup_config_store()
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -53,6 +54,7 @@ def warmup(n):
 
 @hydra.main(version_base=None, config_path="./configs", config_name="inference")
 def main(cfg: InferenceConfig):
+    print(OmegaConf.to_yaml(cfg))
     tokens = cfg.tokens
     cfg = OmegaConf.load(f"{cfg.path}/config.yaml")
     print(OmegaConf.to_yaml(cfg))

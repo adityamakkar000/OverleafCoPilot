@@ -5,3 +5,5 @@ defaults:
 
 model_id: google/gemma-2b-it
 name: gemma
+dataCFG:
+  processPath: ./dataset/latex_gemma

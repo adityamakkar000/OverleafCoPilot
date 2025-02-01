@@ -14,6 +14,7 @@ class DatasetConfig:
     outputPath: str = MISSING
     processPath: str = MISSING
     cutoff: int = 7
+    sentence_length: int = 100
 
 class DatasetProcessor:
     def __init__(self, config: DatasetConfig):
@@ -31,29 +32,34 @@ class DatasetProcessor:
         ]
 
     def create_dataset(self, tokenizer=None):
-        data = self.dataset
         dataset = []
+        data = self.dataset
         length = len(data)
-        for i in range(length):
-            sentence = data[i]
-            if len(sentence) - 1 < self.config.cutoff:
+        cutoff = self.config.cutoff
+        sentence_length = self.config.sentence_length
+        instruction = self.config.instruction
+
+        for i in range(0, length, sentence_length):
+
+            sentence = data[i:i+sentence_length]
+            sentence = ' '.join(sentence)
+
+            if len(sentence) < cutoff:
                 continue
 
-            indexes = [x for x in range(self.config.cutoff, len(sentence) - 1)]
+            indexes = [x for x in range(cutoff, len(sentence) -1)]
             input = [sentence[i:_] for _ in indexes]
             output = [sentence[_:] for _ in indexes]
-            for a, b in zip(input, output):
-                dataset.append(
-                    {
-                        "instruction": f"{self.config.instruction}",
-                        "input": r"{}".format(a),
-                        "output": r"{}".format(b),
-                    }
-                )
+            for a,b in zip(input, output):
+                dataset.append({
+                    'instruction': instruction,
+                    'input': a,
+                    'output': b
+                })
 
+        self.save_dataset(dataset)
         if tokenizer is not None:
             self.tokenize(tokenizer)
-        self.save_dataset(dataset)
 
     def save_dataset(self, dataset: List[Dict]) -> None:
         with open(
@@ -115,7 +121,8 @@ if __name__ == "__main__":
         "inputPath": "./dataset/latex.txt",
         "outputPath": "./dataset/latex.csv",
         "processPath": "./dataset/latex/",
-        "cutoff": 7,
+        "cutoff": 100,
+        "sentence_length": 6
     }
 
     tokenizer = AutoTokenizer.from_pretrained(
@@ -127,6 +134,8 @@ if __name__ == "__main__":
         inputPath=dataCFG["inputPath"],
         outputPath=dataCFG["outputPath"],
         processPath=dataCFG["processPath"],
+        cutoff=dataCFG["cutoff"],
+        sentence_length=dataCFG["sentence_length"]
     )
 
     ds = get_dataset(cfg, tokenizer)

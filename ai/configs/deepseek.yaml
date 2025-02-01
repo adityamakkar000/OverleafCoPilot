@@ -4,3 +4,5 @@ defaults:
 
 model_id: deepseek-ai/deepseek-math-7b-instruct
 name: deepseek
+dataCFG:
+  processPath: ./dataset/latex_deepseek

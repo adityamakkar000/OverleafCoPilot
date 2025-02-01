@@ -2,3 +2,5 @@ inputPath: ./dataset/latex.txt
 outputPath: ./dataset/latex.csv
 processPath: ./dataset/latex
 instruction: "There will be an incomplete proof. Please reason step by step to help complete the latex proof. Important: Respond by completing where the statement left off. The statement is: \n"
+cutoff: 100
+sentence_length: 6
