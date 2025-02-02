@@ -81,7 +81,7 @@ function copyConsole() {
 
 function newLine(text){
     let sentenceCounter = 0;
-    const maxSentences = 1;
+    const maxSentences = 6;
     const newText = text.split('').reverse()
 
     for (let i = 0; i < newText.length; i++) {
@@ -93,6 +93,7 @@ function newLine(text){
         }
 
     }
+    return text;
 }
 
 
