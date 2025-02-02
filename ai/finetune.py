@@ -41,9 +41,11 @@ class ModelTrainer:
         self.model = None
 
     def _get_device(self):
+        if torch.cuda.is_available():
+            return 'cuda'
         if torch.backends.mps.is_available():
             return "mps"
-        return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        return 'cpu'
 
     def setup_output_directory(self):
         if os.path.exists(f"{self.cfg.output}/{self.cfg.name}/config.yaml"):
