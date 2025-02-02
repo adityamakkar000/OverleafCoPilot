@@ -7,6 +7,8 @@ from omegaconf import OmegaConf, MISSING
 from dataclasses import dataclass
 from finetune import ftConfig
 import time
+import os
+from dotenv import load_dotenv
 
 
 @dataclass
@@ -87,24 +89,9 @@ def main(cfg: InferenceConfig):
 
     model_manager = ModelManager(cfg, tokens)
 
-    prompt_input = r"""
-        If we add $W_1 + W_2$ we obtain $\begin{pmatrix}
-        a + \alpha & -a + \beta \\
-        b - \alpha & c + \gamma \\
-        \end{pmatrix}$. Thus we can set $u= a + \alpha, v = -a + \beta, t = b - \alpha, z = c + \gamma \in F$ and we obtain $W_1 + W_2$ is off the form $\begin{pmatrix}
-            u & v \\ t & z \\
-        \end{pmatrix}$ and thus we have 4 separate scalars. Therefore if we have the set $S = \{ \begin{pmatrix}
-            1 & 0 \\ 0 & 0 \\
-        \end{pmatrix}, \begin{pmatrix}
-            0 & 1 \\ 0 & 0 \\
-        \end{pmatrix} , \begin{pmatrix}
-            0 & 0 \\ 1 & 0 \\
-        \end{pmatrix}, \begin{pmatrix}
-            0 & 0 \\ 0 & 1 \\
-        \end{pmatrix}\}$ and $t_1, t_2, t_3, t_4 \in F$ then as a linear combination we obtain $0 = \begin{pmatrix}
-            t_1 & t_2 \\ t_3 & t_4
-        \end{pmatrix}$
-    """
+    load_dotenv()
+    prompt_input = r"""{}""".format(os.getenv("PROMPT"))
+    print(prompt_input)
 
     for _ in range(10):
         start = time.time()
