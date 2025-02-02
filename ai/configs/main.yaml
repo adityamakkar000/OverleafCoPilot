@@ -10,11 +10,12 @@ r: 2
 precision: bfloat16
 lora_alpha: 4
 modules_limit: 10
-batch_size: 1
+batch_size: 2
 gradient_accumulation_steps: 1
 optim: adamw_torch
 warmup_steps: 0.1
 max_steps: 250
+eval_steps: 10
 learning_rate: 4e-4
 logging_steps: 1
 output: ./results

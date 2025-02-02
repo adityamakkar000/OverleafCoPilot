@@ -27,6 +27,7 @@ class ftConfig:
     optim: str = MISSING
     warmup_steps: float = MISSING
     max_steps: int = MISSING
+    eval_steps: int = MISSING
     learning_rate: float = MISSING
     logging_steps: int = MISSING
     output: str = MISSING
@@ -57,8 +58,8 @@ class ModelTrainer:
                 )
 
         os.makedirs(f"./{self.cfg.output}/{self.cfg.name}/", exist_ok=True)
-        with open(f"./{self.cfg.output}/{self.cfg.name}/config.yaml", "w") as file:
-            file.write(str(self.cfg))
+        save_dir = f"./{self.cfg.output}/{self.cfg.name}/"
+        OmegaConf.save(config=self.cfg, f=os.path.join(save_dir, "config.yaml"))
 
     def prepare_dataset(self):
         self.tokenizer.padding_side = 'right'
@@ -157,7 +158,7 @@ class ModelTrainer:
                     learning_rate=self.cfg.learning_rate,
                     logging_steps=self.cfg.logging_steps,
                     evaluation_strategy="steps",
-                    eval_steps=10 ,
+                    eval_steps=self.cfg.eval_steps,
                     per_device_eval_batch_size=self.cfg.batch_size,
                     output_dir=f"{self.cfg.output}/{self.cfg.name}/checkpoints",
                     optim=self.cfg.optim,
