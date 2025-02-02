@@ -1,3 +1,5 @@
+const url = "http://172.20.10.5:3000"
+
 function copyConsole() {
     const handler = async (event) => {
         if (!event.altKey) return;
@@ -18,7 +20,7 @@ function copyConsole() {
             code: "ArrowUp",
             shiftKey: true,
             bubbles: true,
-    });
+        });
             if (i == 0) {
                 document.activeElement.dispatchEvent(cmdShiftRightEvent);
             } else {
@@ -41,11 +43,11 @@ function copyConsole() {
 
         const sendPost = async () => {
             try {
-                const url = 'http://127.0.0.1:3000/post';
+                ;
                 const body = JSON.stringify({ text: modifiedText });
                 const headers = { 'Content-Type': 'application/json'};
                 const method = 'POST';
-                const response = await fetch(url, {
+                const response = await fetch(url + "/post", {
                     method,
                     headers,
                     body,
@@ -61,8 +63,6 @@ function copyConsole() {
         await sendPost();
 
         console.log(selectedText);
-
-
 
         const editor = document.querySelector('.cm-editor');
 
