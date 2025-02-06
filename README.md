@@ -10,7 +10,7 @@ A Chrome extension and finetuning script to run a local LLM latex completion.
 1. **Clone the Repository**
 
    ```bash
-   git clone https://github.com/adityamakkar000/ASL-Sign-Research.git
+   git clone https://github.com/adityamakkar000/OverleafCoPilot.git
    ```
 3. **Setup Env**
 
